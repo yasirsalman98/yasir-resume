@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { MotionProps, Variants } from 'framer-motion'
@@ -64,8 +64,44 @@ const featuredSkills = new Set([
 ])
 
 function App() {
+  const videoRef = useRef<HTMLVideoElement | null>(null)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [showExperienceDetails, setShowExperienceDetails] = useState(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    video.muted = true
+    video.defaultMuted = true
+    video.playsInline = true
+
+    const playBackgroundVideo = () => {
+      const playAttempt = video.play()
+      if (playAttempt) {
+        playAttempt.catch(() => {
+          // Mobile Safari can defer autoplay until it has enough media data.
+        })
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) playBackgroundVideo()
+    }
+
+    playBackgroundVideo()
+    video.addEventListener('canplay', playBackgroundVideo)
+    video.addEventListener('loadeddata', playBackgroundVideo)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('touchstart', playBackgroundVideo, { once: true, passive: true })
+
+    return () => {
+      video.removeEventListener('canplay', playBackgroundVideo)
+      video.removeEventListener('loadeddata', playBackgroundVideo)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('touchstart', playBackgroundVideo)
+    }
+  }, [])
 
   const handleHeroContactClick = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
@@ -81,7 +117,17 @@ function App() {
 
   return (
     <main className="portfolio-page">
-      <video className="hero-video" autoPlay muted loop playsInline aria-hidden="true">
+      <video
+        ref={videoRef}
+        className="hero-video"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        controls={false}
+        aria-hidden="true"
+      >
         <source src="/videos/hero-video.mp4" type="video/mp4" />
       </video>
 

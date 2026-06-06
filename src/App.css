@@ -64,7 +64,11 @@ a {
 
 .hero-video {
   z-index: -6;
+  display: block;
   object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
   background: #050614;
 }
 
